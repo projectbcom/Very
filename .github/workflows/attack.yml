@@ -1,15 +1,77 @@
-      - name: Clone official bdd-predicate repository WITH submodules
+name: bdd-predicate attack
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  recover:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Convert signatures
+        run: python convert.py
+
+      - name: Install Miniconda and SageMath
+        run: |
+          wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda init bash
+          conda install -c conda-forge sage fplll fpypb cxxopts -y
+
+      - name: Clone bdd-predicate and initialize g6k
         run: |
           git clone --recursive https://github.com/malb/bdd-predicate.git
           cd bdd-predicate
           git submodule update --init --recursive
 
-      - name: Install bdd-predicate dependencies and build g6k
+      - name: Install bdd-predicate dependencies & build g6k
         run: |
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
           pip install -r requirements.txt
-          # Build/install the g6k submodule locally
           cd g6k
           pip install -e .
+
+      - name: Attack with Sieve (scale + parallel)
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 ../input.txt
+        continue-on-error: true
+
+      - name: Attack with Enumeration (fallback)
+        if: always()
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred ../input.txt
+        continue-on-error: true
+
+      - name: Attack with BKZ (final fallback)
+        if: always()
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
+          python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred ../input.txt
+        continue-on-error: true
