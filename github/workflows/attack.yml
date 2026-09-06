@@ -12,33 +12,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python (for conversion)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install requirements (only what you listed)
+      - name: Install requirements
         run: pip install -r requirements.txt
 
       - name: Convert signatures to bdd-predicate format
         run: python convert.py
 
-      - name: Attack with Sieve (fastest for 5-bit MSB)
+      - name: Attack with Sieve
         run: |
           docker run --rm -v $PWD:/data malb/bdd-predicate \
-            /data/input.txt --msb --algorithm sieve
+            sage -python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 /data/input.txt
         continue-on-error: true
 
       - name: Attack with Enumeration (if sieve fails)
         if: failure()
         run: |
           docker run --rm -v $PWD:/data malb/bdd-predicate \
-            /data/input.txt --msb --algorithm enum
+            sage -python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred /data/input.txt
         continue-on-error: true
 
       - name: Attack with BKZ (if enum fails)
         if: failure()
         run: |
           docker run --rm -v $PWD:/data malb/bdd-predicate \
-            /data/input.txt --msb --algorithm bkz
+            sage -python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred /data/input.txt
         continue-on-error: true
