@@ -28,13 +28,24 @@ jobs:
           wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
           bash miniconda.sh -b -p $HOME/miniconda
           echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+          echo "$HOME/miniconda/etc/profile.d/conda.sh" >> $GITHUB_PATH
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda init bash
           conda install -c conda-forge sage -y
+
+      - name: Verify SageMath installation
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          sage --version
 
       - name: Clone official bdd-predicate repository
         run: git clone https://github.com/malb/bdd-predicate.git
 
       - name: Attack with Sieve (scale + parallel)
         run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
           cd bdd-predicate
           sage -python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 ../input.txt
         continue-on-error: true
@@ -42,6 +53,8 @@ jobs:
       - name: Attack with Enumeration (fallback)
         if: always()
         run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
           cd bdd-predicate
           sage -python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred ../input.txt
         continue-on-error: true
@@ -49,6 +62,8 @@ jobs:
       - name: Attack with BKZ (final fallback)
         if: always()
         run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
           cd bdd-predicate
           sage -python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred ../input.txt
         continue-on-error: true
