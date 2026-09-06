@@ -32,13 +32,17 @@ jobs:
           conda init bash
           conda install -c conda-forge sage -y
 
-      - name: Clone official bdd-predicate (without submodules)
+      - name: Clone bdd-predicate (without submodules)
         run: git clone https://github.com/malb/bdd-predicate.git
 
-      - name: Manually clone g6k using GITHUB_TOKEN
+      - name: Configure Git to use token for all GitHub clones
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Initialize and update submodules
         run: |
           cd bdd-predicate
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/malb/g6k.git
+          git submodule update --init --recursive
 
       - name: Install g6k and fpylll
         run: |
