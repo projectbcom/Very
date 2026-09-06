@@ -32,8 +32,11 @@ jobs:
           conda init bash
           conda install -c conda-forge sage -y
 
-      - name: Run Sage lattice attack
-        run: |
-          source $HOME/miniconda/etc/profile.d/conda.sh
-          conda activate base
-          sage attack.sage
+      - run: |
+  source $HOME/miniconda/etc/profile.d/conda.sh
+  conda activate base
+  echo "Sage version:"
+  sage --version
+  echo "=== Starting attack script ==="
+  sage attack.sage
+  echo "=== Script finished ==="
