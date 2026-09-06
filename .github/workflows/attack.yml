@@ -35,6 +35,13 @@ jobs:
       - name: Clone official bdd-predicate repository
         run: git clone https://github.com/malb/bdd-predicate.git
 
+      - name: Install bdd-predicate dependencies (official requirements)
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          cd bdd-predicate
+          pip install -r requirements.txt
+
       - name: Attack with Sieve (scale + parallel)
         run: |
           source $HOME/miniconda/etc/profile.d/conda.sh
