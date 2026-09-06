@@ -9,7 +9,7 @@ jobs:
   recover:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository code
+      - name: Checkout your own repository (contains input.txt, convert.py)
         uses: actions/checkout@v4
 
       - name: Set up Python (for converter only)
@@ -32,20 +32,13 @@ jobs:
           conda init bash
           conda install -c conda-forge sage -y
 
-      - name: Clone bdd-predicate (without submodules)
-        run: git clone https://github.com/malb/bdd-predicate.git
-
-      - name: Override submodule URL and update
-        run: |
-          cd bdd-predicate
-          # Set the URL for the g6k submodule using the token
-          git config --local submodule.g6k.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/malb/g6k.git
-          # Sync the new URL
-          git submodule sync
-          # Initialize and update recursively
-          git submodule update --init --recursive
-          # Verify g6k exists
-          ls -la g6k/
+      - name: Checkout bdd-predicate with all submodules
+        uses: actions/checkout@v4
+        with:
+          repository: malb/bdd-predicate
+          path: bdd-predicate
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install g6k and fpylll
         run: |
