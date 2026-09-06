@@ -23,13 +23,13 @@ jobs:
       - name: Convert signatures to bdd-predicate format
         run: python convert.py
 
-      - name: Clone official bdd-predicate repository
+      - name: Clone official bdd-predicate repository with submodules
         run: |
           git clone https://github.com/malb/bdd-predicate.git
           cd bdd-predicate
           git submodule update --init --recursive
 
-      - name: Build corrected Docker image
+      - name: Build Docker image with corrected Dockerfile
         run: |
           cd bdd-predicate
           docker build -t bdd-predicate -f ../Dockerfile .
