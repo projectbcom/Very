@@ -29,7 +29,6 @@ def parse_sigs(filepath):
     return sigs
 
 def verify_key(d, pub_hex):
-    # Recover public key from d and compare
     p = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
     a = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC
     b = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B
@@ -72,40 +71,35 @@ def attack(sigs):
         r0, s0, z0, pub0 = sigs[0]
         inv_s0 = inverse_mod(s0, n)
         k0 = ((z0 - r0 * d_candidate) * inv_s0) % n
-        # Check bias: k0 should be < 2^(256-bits)
         if k0 < 2**(256-bits):
             sys.stdout.write(f"Row {i}: candidate d = {hex(d_candidate)}\n")
             sys.stdout.flush()
             if verify_key(d_candidate, pub0):
                 return d_candidate
-            # try negative
             d_neg = n - d_candidate
             if verify_key(d_neg, pub0):
                 return d_neg
     return None
 
-def main():
-    sys.stdout.write("main() started.\n")
+# MAIN – call directly (no __name__ guard)
+sys.stdout.write("main() started.\n")
+sys.stdout.flush()
+sigs = parse_sigs('my_signatures.txt')
+if len(sigs) < 2:
+    sys.stdout.write("Need at least 2 signatures.\n")
     sys.stdout.flush()
-    sigs = parse_sigs('my_signatures.txt')
-    if len(sigs) < 2:
-        sys.stdout.write("Need at least 2 signatures.\n")
-        sys.stdout.flush()
-        sys.exit(1)
-    sys.stdout.write(f"Loaded {len(sigs)} signatures with {bits}-bit MSB zero bias.\n")
+    sys.exit(1)
+sys.stdout.write(f"Loaded {len(sigs)} signatures with {bits}-bit MSB zero bias.\n")
+sys.stdout.flush()
+key = attack(sigs)
+if key:
+    sys.stdout.write(f"✅ Private key found: {hex(key)}\n")
     sys.stdout.flush()
-    key = attack(sigs)
-    if key:
-        sys.stdout.write(f"✅ Private key found: {hex(key)}\n")
-        sys.stdout.flush()
-        if verify_key(key, sigs[0][3]):
-            sys.stdout.write("Verification passed.\n")
-        else:
-            sys.stdout.write("Verification failed.\n")
-        sys.stdout.flush()
+    if verify_key(key, sigs[0][3]):
+        sys.stdout.write("Verification passed.\n")
     else:
-        sys.stdout.write("❌ No key recovered.\n")
-        sys.stdout.flush()
-
-if __name__ == '__main__':
-    main()
+        sys.stdout.write("Verification failed.\n")
+    sys.stdout.flush()
+else:
+    sys.stdout.write("❌ No key recovered.\n")
+    sys.stdout.flush()
