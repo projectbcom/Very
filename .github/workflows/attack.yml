@@ -32,15 +32,17 @@ jobs:
           conda init bash
           conda install -c conda-forge sage -y
 
-      - name: Clone official bdd-predicate repository
-        run: git clone https://github.com/malb/bdd-predicate.git
+      - name: Clone official bdd-predicate repository WITH submodules
+        run: git clone --recursive https://github.com/malb/bdd-predicate.git
 
-      - name: Install bdd-predicate dependencies (official requirements)
+      - name: Install bdd-predicate dependencies (official requirements + g6k)
         run: |
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
           pip install -r requirements.txt
+          # Also install g6k dependencies if needed (they are included via submodule)
+          pip install -e .  # installs the package itself (optional but safe)
 
       - name: Attack with Sieve (scale + parallel)
         run: |
