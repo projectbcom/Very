@@ -23,36 +23,25 @@ jobs:
       - name: Convert signatures to bdd-predicate format
         run: python convert.py
 
-      - name: Clone official bdd-predicate repository with ALL submodules
-        run: |
-          git clone https://github.com/malb/bdd-predicate.git
-          cd bdd-predicate
-          git submodule update --init --recursive
-
-      - name: Build Docker image from official source
-        run: |
-          cd bdd-predicate
-          docker build -t bdd-predicate .
+      - name: Pull official bdd-predicate Docker image
+        run: docker pull malb/bdd-predicate:latest
 
       - name: Attack with Sieve (scale + parallel)
         run: |
-          cd bdd-predicate
-          docker run --rm -v $PWD/..:/data bdd-predicate \
-            sage -python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 /data/input.txt
+          docker run --rm -v $PWD:/data malb/bdd-predicate:latest \
+            sage -python /bdd-predicate/ecdsa_cli.py solve -c secp256k1 -f scale -p 8 /data/input.txt
         continue-on-error: true
 
       - name: Attack with Enumeration (fallback)
         if: always()
         run: |
-          cd bdd-predicate
-          docker run --rm -v $PWD/..:/data bdd-predicate \
-            sage -python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred /data/input.txt
+          docker run --rm -v $PWD:/data malb/bdd-predicate:latest \
+            sage -python /bdd-predicate/ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred /data/input.txt
         continue-on-error: true
 
       - name: Attack with BKZ (final fallback)
         if: always()
         run: |
-          cd bdd-predicate
-          docker run --rm -v $PWD/..:/data bdd-predicate \
-            sage -python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred /data/input.txt
+          docker run --rm -v $PWD:/data malb/bdd-predicate:latest \
+            sage -python /bdd-predicate/ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred /data/input.txt
         continue-on-error: true
