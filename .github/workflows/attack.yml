@@ -1,4 +1,4 @@
-name: Lattice Attack (5-bit MSB)
+name: Lattice Attack with Sage
 
 on:
   push:
@@ -12,18 +12,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python (just for converter)
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install system dependencies
+      - name: Install converter dependencies
+        run: pip install -r requirements.txt
+
+      - name: Convert signatures to Sage format
+        run: python convert.py   # but we'll change this to output a sage-compatible file
+
+      - name: Install Miniconda and SageMath
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libmpfr-dev libfplll-dev
+          wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda init bash
+          conda install -c conda-forge sage -y
 
-      - name: Install Python packages
-        run: pip install fpylll gmpy2 ecdsa
-
-      - name: Run lattice attack
-        run: python attack.py
+      - name: Run Sage lattice attack
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          sage attack.sage
