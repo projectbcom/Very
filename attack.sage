@@ -3,7 +3,7 @@
 from sage.all import *
 import sys
 
-# Force print immediately
+# Force immediate output
 sys.stdout.write("=== attack.sage started ===\n")
 sys.stdout.flush()
 
@@ -29,7 +29,7 @@ def parse_sigs(filepath):
     return sigs
 
 def verify_key(d, pub_hex):
-    # Simple check: compute public point and compare hex
+    # Recover public key from d and compare
     p = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
     a = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC
     b = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B
@@ -48,6 +48,8 @@ def attack(sigs):
     sys.stdout.flush()
     m = len(sigs)
     if m < 2:
+        sys.stdout.write("Need at least 2 signatures.\n")
+        sys.stdout.flush()
         return None
     B = matrix(ZZ, m+1, m+1)
     for i in range(m):
@@ -70,9 +72,13 @@ def attack(sigs):
         r0, s0, z0, pub0 = sigs[0]
         inv_s0 = inverse_mod(s0, n)
         k0 = ((z0 - r0 * d_candidate) * inv_s0) % n
+        # Check bias: k0 should be < 2^(256-bits)
         if k0 < 2**(256-bits):
+            sys.stdout.write(f"Row {i}: candidate d = {hex(d_candidate)}\n")
+            sys.stdout.flush()
             if verify_key(d_candidate, pub0):
                 return d_candidate
+            # try negative
             d_neg = n - d_candidate
             if verify_key(d_neg, pub0):
                 return d_neg
