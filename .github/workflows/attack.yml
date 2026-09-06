@@ -1,4 +1,4 @@
-name: bdd-predicate attack
+name: bdd-predicate with 5-bit bias
 
 on:
   push:
@@ -12,15 +12,15 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python (for converter only)
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install requirements
+      - name: Install requirements (converter only)
         run: pip install -r requirements.txt
 
-      - name: Convert signatures
+      - name: Convert signatures to bdd-predicate format
         run: python convert.py
 
       - name: Install Miniconda and SageMath
@@ -30,29 +30,33 @@ jobs:
           echo "$HOME/miniconda/bin" >> $GITHUB_PATH
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda init bash
-          conda install -c conda-forge sage fplll fpypb cxxopts -y
+          conda install -c conda-forge sage -y
 
-      - name: Clone bdd-predicate and initialize g6k
+      - name: Install system build dependencies
         run: |
-          git clone --recursive https://github.com/malb/bdd-predicate.git
-          cd bdd-predicate
-          git submodule update --init --recursive
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libgmp-dev libmpfr-dev libfplll-dev
 
-      - name: Install bdd-predicate dependencies & build g6k
+      - name: Clone and build official bdd-predicate (with g6k)
         run: |
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
+          git clone --recursive https://github.com/malb/bdd-predicate.git
           cd bdd-predicate
-          pip install -r requirements.txt
+          # Build g6k first (C++ dependencies)
           cd g6k
           pip install -e .
+          cd ..
+          # Install main dependencies
+          pip install -r requirements.txt
+          # Install fpylll (required by g6k)
+          pip install fpylll
 
       - name: Attack with Sieve (scale + parallel)
         run: |
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
-          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 ../input.txt
         continue-on-error: true
 
@@ -62,7 +66,6 @@ jobs:
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
-          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred ../input.txt
         continue-on-error: true
 
@@ -72,6 +75,5 @@ jobs:
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
-          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred ../input.txt
         continue-on-error: true
