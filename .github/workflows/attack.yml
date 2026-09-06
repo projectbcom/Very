@@ -35,12 +35,10 @@ jobs:
       - name: Clone official bdd-predicate (without submodules)
         run: git clone https://github.com/malb/bdd-predicate.git
 
-      - name: Manually clone g6k into the correct location
+      - name: Manually clone g6k using GITHUB_TOKEN
         run: |
           cd bdd-predicate
-          git clone https://github.com/malb/g6k.git
-        env:
-          GIT_TERMINAL_PROMPT: 0   # Prevents interactive auth prompt
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/malb/g6k.git
 
       - name: Install g6k and fpylll
         run: |
