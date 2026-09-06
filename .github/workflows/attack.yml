@@ -47,6 +47,7 @@ jobs:
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 -f scale -p 8 ../input.txt
         continue-on-error: true
 
@@ -56,6 +57,7 @@ jobs:
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 --algorithm enum_pred ../input.txt
         continue-on-error: true
 
@@ -65,5 +67,6 @@ jobs:
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda activate base
           cd bdd-predicate
+          export PYTHONPATH="$PWD:$PYTHONPATH"
           python ecdsa_cli.py solve -c secp256k1 --algorithm bkz_pred ../input.txt
         continue-on-error: true
