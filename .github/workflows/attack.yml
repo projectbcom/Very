@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Convert signatures to Sage format
-        run: python convert.py   # but we'll change this to output a sage-compatible file
+        run: python convert.py
 
       - name: Install Miniconda and SageMath
         run: |
@@ -32,11 +32,12 @@ jobs:
           conda init bash
           conda install -c conda-forge sage -y
 
-      - run: |
-  source $HOME/miniconda/etc/profile.d/conda.sh
-  conda activate base
-  echo "Sage version:"
-  sage --version
-  echo "=== Starting attack script ==="
-  sage attack.sage
-  echo "=== Script finished ==="
+      - name: Run Sage lattice attack
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          echo "Sage version:"
+          sage --version
+          echo "=== Starting attack script ==="
+          sage attack.sage 2>&1
+          echo "=== Script finished ==="
