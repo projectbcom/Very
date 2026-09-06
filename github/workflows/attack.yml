@@ -1,8 +1,8 @@
-name: ECDSA Multi-Stage Attack
+name: bdd-predicate with 5-bit bias
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,18 +12,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python (for conversion)
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libmpfr-dev libfplll-dev
-
-      - name: Install Python requirements
+      - name: Install requirements (only what you listed)
         run: pip install -r requirements.txt
 
-      - name: Run multi-attack script
-        run: python attack.py
+      - name: Convert signatures to bdd-predicate format
+        run: python convert.py
+
+      - name: Attack with Sieve (fastest for 5-bit MSB)
+        run: |
+          docker run --rm -v $PWD:/data malb/bdd-predicate \
+            /data/input.txt --msb --algorithm sieve
+        continue-on-error: true
+
+      - name: Attack with Enumeration (if sieve fails)
+        if: failure()
+        run: |
+          docker run --rm -v $PWD:/data malb/bdd-predicate \
+            /data/input.txt --msb --algorithm enum
+        continue-on-error: true
+
+      - name: Attack with BKZ (if enum fails)
+        if: failure()
+        run: |
+          docker run --rm -v $PWD:/data malb/bdd-predicate \
+            /data/input.txt --msb --algorithm bkz
+        continue-on-error: true
