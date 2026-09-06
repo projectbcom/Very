@@ -1,0 +1,29 @@
+name: ECDSA Multi-Stage Attack
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libmpfr-dev libfplll-dev
+
+      - name: Install Python requirements
+        run: pip install -r requirements.txt
+
+      - name: Run multi-attack script
+        run: python attack.py
