@@ -1,4 +1,4 @@
-name: Lattice Attack with Sage
+name: ecdsa-break Attack
 
 on:
   push:
@@ -12,32 +12,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python (just for converter)
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Install converter dependencies
-        run: pip install -r requirements.txt
-
-      - name: Convert signatures to Sage format
-        run: python convert.py
-
-      - name: Install Miniconda and SageMath
+      - name: Install system dependencies
         run: |
-          wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-          bash miniconda.sh -b -p $HOME/miniconda
-          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
-          source $HOME/miniconda/etc/profile.d/conda.sh
-          conda init bash
-          conda install -c conda-forge sage -y
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libmpfr-dev libfplll-dev
 
-      - name: Run Sage lattice attack
+      - name: Install ecdsa-break and dependencies
         run: |
-          source $HOME/miniconda/etc/profile.d/conda.sh
-          conda activate base
-          echo "Sage version:"
-          sage --version
-          echo "=== Starting attack script ==="
-          sage attack.sage 2>&1
-          echo "=== Script finished ==="
+          pip install --upgrade pip
+          pip install ecdsa-break fpylll gmpy2 ecdsa
+
+      - name: Run attack
+        run: python attack.py
