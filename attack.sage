@@ -62,9 +62,17 @@ try:
         for i in range(m):
             for row in range(m+2):
                 B[row, i+1] *= SCALE
+
         sys.stdout.write("Running BKZ-20...\n")
         sys.stdout.flush()
-        B = B.BKZ(block_size=20, algorithm='FPLLL')
+        try:
+            # Try BKZ without algorithm parameter (uses default)
+            B = B.BKZ(block_size=20)
+        except Exception as e:
+            sys.stdout.write(f"BKZ failed: {e}, falling back to LLL...\n")
+            sys.stdout.flush()
+            B = B.LLL()
+
         sys.stdout.write("Checking rows...\n")
         sys.stdout.flush()
         for i in range(m+2):
